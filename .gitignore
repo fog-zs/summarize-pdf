@@ -1,0 +1,11 @@
+/node_modules/
+/public/build/
+
+.DS_Store
+.env
+
+__pycache__/
+summarize_pdf/
+summary_results/
+uploaded_pdfs/
+public/
