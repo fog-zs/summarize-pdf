@@ -59,8 +59,7 @@ def generate_string_hash(input_string: str) -> str:
 
 # APIエンドポイント: PDFファイルをアップロードしてテキストを抽出する
 @app.post("/upload-pdf/")
-async def upload_pdf(file: UploadFile = File(...)):
-    print("test")
+async def upload_pdf(file: UploadFile = File(...)):    
     # アップロードされたファイルを保存するディレクトリ
     upload_dir = "uploaded_pdfs"
     os.makedirs(upload_dir, exist_ok=True)
@@ -100,8 +99,9 @@ async def summarize_text(request: SummarizeRequest):
     result_file_path = os.path.join(results_dir, f"{generate_string_hash(text)}_summary.json")
     if os.path.exists(result_file_path):
         with open(result_file_path, "r", encoding="utf-8") as f:
-            existing_result = json.load(f)
-        return {"summary": existing_result["summary"]}
+            existing_result = json.load(f)            
+            existing_result = old_to_new(existing_result)
+            return {"paper": existing_result}
          
     prompt = get_prompt("summary")
     summary = llm(prompt, text)
@@ -110,20 +110,21 @@ async def summarize_text(request: SummarizeRequest):
     title = llm(prompt, text[:300])
     
     prompt = get_prompt("tag")
-    tag = llm(prompt, title)
+    tags = llm(prompt, title)    
+    tasg = tags.replace(", ", ",")
     
     # 結果を保存
     result = {
         "filename": filename,
         "title": title, 
-        "extracted_text": text,
+        "text": text,
         "summary": summary,
-        "tag": tag.split(",")
+        "tags": tags.split(",")
     }
     with open(result_file_path, "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=4)
     
-    return {"summary": summary}
+    return {"paper": result }
 
 def llm(prompt_template, text):        
     completion = client.chat.completions.create(
@@ -168,75 +169,22 @@ def get_paper(file_path, file_name):
     with open(file_path, "r", encoding="utf-8") as f:
         existing_result = json.load(f)            
     
+    existing_result = old_to_new(existing_result)
+    
     return {
         "id": file_hash,
         "title": existing_result["title"],  # タイトルをファイル名から取得（拡張子除く）
         "text": existing_result["extracted_text"],
-        "summary": existing_result["summary"]
+        "summary": existing_result["text"],
+        "tags": existing_result["tag"]
     }
-
-
-@app.get("/get-papers/old/")
-async def get_papers_old():
-    positions_file_path = "positions.json"
-    papers = []
-
-    # 位置データを読み込む
-    if os.path.exists(positions_file_path):
-        with open(positions_file_path, "r", encoding="utf-8") as f:
-            positions = json.load(f)
-    else:
-        positions = {}
     
-    results_dir = "summary_results"
+def old_to_new(existing_result):
+    if "tag" not in existing_result:
+        existing_result["tag"] = []
     
-    # アップロードされたPDFを読み込み
-    if not os.path.exists(results_dir): return {"papers": none}
+    if "text" not in existing_result:
+        existing_result["text"] = existing_result["extracted_text"]
+        
+    return existing_result
     
-    for filename in os.listdir(results_dir):
-        if not filename.endswith(".json"): continue
-        
-        file_hash = filename.split("_")[0]
-        position = positions.get(file_hash, {"x": 0, "y": 0})
-        
-        result_file_path = os.path.join(results_dir, filename)
-        if not os.path.exists(result_file_path): continue
-        
-        with open(result_file_path, "r", encoding="utf-8") as f:
-            existing_result = json.load(f)
-        
-            papers.append({
-                "id": file_hash,
-                "position": position,
-                "title": existing_result["title"],  # タイトルをファイル名から取得（拡張子除く）
-                "text": existing_result["extracted_text"],
-                "summary": existing_result["summary"]
-            })
-    
-    return {"papers": papers}
-
-# リクエストボディ用のPydanticモデル
-class SavePositionRequest(BaseModel):
-    id: str
-    position: dict
-
-# APIエンドポイント: 論文の位置を保存する
-@app.post("/save-position/")
-async def save_position(request: SavePositionRequest):
-    positions_file_path = "positions.json"
-
-    # 既存の位置データを読み込む
-    if os.path.exists(positions_file_path):
-        with open(positions_file_path, "r", encoding="utf-8") as f:
-            positions = json.load(f)
-    else:
-        positions = {}
-
-    # 位置データを更新
-    positions[request.id] = request.position
-
-    # 更新された位置データを保存
-    with open(positions_file_path, "w", encoding="utf-8") as f:
-        json.dump(positions, f, ensure_ascii=False, indent=4)
-    print(request.position)
-    return {"status": "success", "message": "Position saved successfully"}

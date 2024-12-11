@@ -1,7 +1,9 @@
 <script>
   import axios from "axios";
-  import { onMount } from 'svelte';
+  import { onMount } from "svelte";
   let file;
+  let title = "";
+  let tags = [];
   let summary = "";
   let extractedText = "";
   let errorMessage = "";
@@ -66,9 +68,12 @@
         text: extractedText,
         filename: file.name,
       });
-      summary = response.data.summary;
+      const paper = response.data.paper;
+      papers.push(paper);
+
+      handleSelect({ detail: { paper } }); // サイドバーに追加された論文を選択
     } catch (error) {
-      errorMessage = "要約の生成に失敗しました。";
+      errorMessage = `要約の生成に失敗しました: ${error.message}`;
     } finally {
       isSummarizing = false;
     }
@@ -115,11 +120,15 @@
 
   // サイドバーからの選択イベントを処理
   const handleSelect = (event) => {
-      selectedPaper = event.detail.paper; // `dispatch` で渡されたデータを取得
-      console.log('Selected paper:', selectedPaper);
-      extractedText = selectedPaper.text;
-      summary = selectedPaper.summary;
-  }
+    selectedPaper = event.detail.paper; // `dispatch` で渡されたデータを取得
+    console.log("Selected paper:", selectedPaper);
+    extractedText = selectedPaper.text;
+    summary = selectedPaper.summary;
+    title = selectedPaper.title;
+    tags = selectedPaper.tags;
+    console.log(tags);
+    console.log(extractedText);
+  };
 
   onMount(() => {
     getPapers();
@@ -129,7 +138,12 @@
 <main class="app">
   <Sidebar {papers} on:select={handleSelect} />
   <div class="content">
-    <h1>論文PDF要約ツール</h1>
+    {#if title}
+      <h2>{title}</h2>
+    {/if}
+    {#if Array.isArray(tags) && tags.length > 0}
+      <p>Tags: {tags.join(", ")}</p>
+    {/if}
     <div
       on:drop={handleDrop}
       on:dragover={handleDragOver}
