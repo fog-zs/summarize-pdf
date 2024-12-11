@@ -102,13 +102,30 @@ async def summarize_text(request: SummarizeRequest):
         with open(result_file_path, "r", encoding="utf-8") as f:
             existing_result = json.load(f)
         return {"summary": existing_result["summary"]}
+         
+    prompt = get_prompt("summary")
+    summary = llm(prompt, text)
     
-    # プロンプトを外部ファイルから読み込む
-    prompt_file_path = os.path.join(f"{os.path.dirname(__file__)}prompts/", 'prompt.txt')
-    with open(prompt_file_path, 'r', encoding='utf-8') as f:
-        prompt_template = f.read()
+    prompt = get_prompt("title")
+    title = llm(prompt, text[:300])
     
-    # GPT-4を使用して要約を生成
+    prompt = get_prompt("tag")
+    tag = llm(prompt, title)
+    
+    # 結果を保存
+    result = {
+        "filename": filename,
+        "title": title, 
+        "extracted_text": text,
+        "summary": summary
+        "tag": tag.split(",")
+    }
+    with open(result_file_path, "w", encoding="utf-8") as f:
+        json.dump(result, f, ensure_ascii=False, indent=4)
+    
+    return {"summary": summary}
+
+def llm(prompt_template, text):
     completion = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
@@ -117,22 +134,15 @@ async def summarize_text(request: SummarizeRequest):
         max_tokens=5000,
         temperature=0.7
     )
-    summary = completion.choices[0].message.content
-    
-    # 結果を保存
-    result = {
-        "filename": filename,
-        "title": filename.split('.')[0],  # タイトルをファイル名から取得（拡張子除く）
-        "extracted_text": text,
-        "summary": summary
-    }
-    with open(result_file_path, "w", encoding="utf-8") as f:
-        json.dump(result, f, ensure_ascii=False, indent=4)
-    
-    return {"summary": summary}
+    return  completion.choices[0].message.content    
+        
+def get_prompt(prompt):
+    prompt_file_path = os.path.join({os.path.dirname(__file__)}, 'prompts', f'{prompt}.txt')
+    with open(prompt_file_path, 'r', encoding='utf-8') as f:        
+        return f.read()
 
 @app.get("/get-papers/")
-async def get_paper_titles():
+async def get_papers():
     results_dir = "summary_results"
     
     # アップロードされたPDFを読み込み
@@ -164,7 +174,7 @@ def get_paper(file_path, file_name):
 
 
 @app.get("/get-papers/old/")
-async def get_papers():
+async def get_papers_old():
     positions_file_path = "positions.json"
     papers = []
 
