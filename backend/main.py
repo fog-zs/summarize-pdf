@@ -117,7 +117,7 @@ async def summarize_text(request: SummarizeRequest):
         "filename": filename,
         "title": title, 
         "extracted_text": text,
-        "summary": summary
+        "summary": summary,
         "tag": tag.split(",")
     }
     with open(result_file_path, "w", encoding="utf-8") as f:
