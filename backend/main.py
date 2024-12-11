@@ -104,7 +104,7 @@ async def summarize_text(request: SummarizeRequest):
         return {"summary": existing_result["summary"]}
     
     # プロンプトを外部ファイルから読み込む
-    prompt_file_path = os.path.join(os.path.dirname(__file__), 'prompt.txt')
+    prompt_file_path = os.path.join(f"{os.path.dirname(__file__)}prompts/", 'prompt.txt')
     with open(prompt_file_path, 'r', encoding='utf-8') as f:
         prompt_template = f.read()
     
@@ -131,8 +131,39 @@ async def summarize_text(request: SummarizeRequest):
     
     return {"summary": summary}
 
-
 @app.get("/get-papers/")
+async def get_paper_titles():
+    results_dir = "summary_results"
+    
+    # アップロードされたPDFを読み込み
+    papers = []
+    if not os.path.exists(results_dir): return {"papers": none}
+    for file_name in os.listdir(results_dir):
+        result_file_path = os.path.join(results_dir, file_name)        
+        paper = get_paper(result_file_path, file_name)
+        papers.append(paper)
+    
+    return {"papers": papers }
+
+def get_paper(file_path, file_name):    
+    if not file_path.endswith(".json"): return
+    
+    file_hash = file_name.split("_")[0]        
+    
+    if not os.path.exists(file_path): return
+    
+    with open(file_path, "r", encoding="utf-8") as f:
+        existing_result = json.load(f)            
+    
+    return {
+        "id": file_hash,
+        "title": existing_result["title"],  # タイトルをファイル名から取得（拡張子除く）
+        "text": existing_result["extracted_text"],
+        "summary": existing_result["summary"]
+    }
+
+
+@app.get("/get-papers/old/")
 async def get_papers():
     positions_file_path = "positions.json"
     papers = []
