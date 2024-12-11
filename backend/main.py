@@ -125,7 +125,7 @@ async def summarize_text(request: SummarizeRequest):
     
     return {"summary": summary}
 
-def llm(prompt_template, text):
+def llm(prompt_template, text):        
     completion = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
@@ -134,12 +134,15 @@ def llm(prompt_template, text):
         max_tokens=5000,
         temperature=0.7
     )
-    return  completion.choices[0].message.content    
+    return completion.choices[0].message.content    
         
 def get_prompt(prompt):
-    prompt_file_path = os.path.join({os.path.dirname(__file__)}, 'prompts', f'{prompt}.txt')
-    with open(prompt_file_path, 'r', encoding='utf-8') as f:        
-        return f.read()
+    file_path = os.path.join(os.path.dirname(__file__), 'prompts', f'{prompt}.txt')    
+    
+    with open(file_path, 'r', encoding='utf-8') as f:      
+        prompt_text = f.read()  
+        
+        return prompt_text
 
 @app.get("/get-papers/")
 async def get_papers():
