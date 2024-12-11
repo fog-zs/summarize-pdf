@@ -97,7 +97,7 @@ async def summarize_text(request: SummarizeRequest):
     # 既に同じファイルの要約結果が存在するか確認
     results_dir = "summary_results"
     os.makedirs(results_dir, exist_ok=True)
-    result_file_path = os.path.join(results_dir, f"{generate_string_hash(filename)}_summary.json")
+    result_file_path = os.path.join(results_dir, f"{generate_string_hash(text)}_summary.json")
     if os.path.exists(result_file_path):
         with open(result_file_path, "r", encoding="utf-8") as f:
             existing_result = json.load(f)
@@ -130,3 +130,69 @@ async def summarize_text(request: SummarizeRequest):
         json.dump(result, f, ensure_ascii=False, indent=4)
     
     return {"summary": summary}
+
+
+@app.get("/get-papers/")
+async def get_papers():
+    positions_file_path = "positions.json"
+    papers = []
+
+    # 位置データを読み込む
+    if os.path.exists(positions_file_path):
+        with open(positions_file_path, "r", encoding="utf-8") as f:
+            positions = json.load(f)
+    else:
+        positions = {}
+    
+    results_dir = "summary_results"
+    
+    # アップロードされたPDFを読み込み
+    if not os.path.exists(results_dir): return {"papers": none}
+    
+    for filename in os.listdir(results_dir):
+        if not filename.endswith(".json"): continue
+        
+        file_hash = filename.split("_")[0]
+        position = positions.get(file_hash, {"x": 0, "y": 0})
+        
+        result_file_path = os.path.join(results_dir, filename)
+        if not os.path.exists(result_file_path): continue
+        
+        with open(result_file_path, "r", encoding="utf-8") as f:
+            existing_result = json.load(f)
+        
+            papers.append({
+                "id": file_hash,
+                "position": position,
+                "title": existing_result["title"],  # タイトルをファイル名から取得（拡張子除く）
+                "text": existing_result["extracted_text"],
+                "summary": existing_result["summary"]
+            })
+    
+    return {"papers": papers}
+
+# リクエストボディ用のPydanticモデル
+class SavePositionRequest(BaseModel):
+    id: str
+    position: dict
+
+# APIエンドポイント: 論文の位置を保存する
+@app.post("/save-position/")
+async def save_position(request: SavePositionRequest):
+    positions_file_path = "positions.json"
+
+    # 既存の位置データを読み込む
+    if os.path.exists(positions_file_path):
+        with open(positions_file_path, "r", encoding="utf-8") as f:
+            positions = json.load(f)
+    else:
+        positions = {}
+
+    # 位置データを更新
+    positions[request.id] = request.position
+
+    # 更新された位置データを保存
+    with open(positions_file_path, "w", encoding="utf-8") as f:
+        json.dump(positions, f, ensure_ascii=False, indent=4)
+    print(request.position)
+    return {"status": "success", "message": "Position saved successfully"}
