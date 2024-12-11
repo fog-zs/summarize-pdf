@@ -50,12 +50,6 @@
         flex-direction: column;
     }
 
-    .title {
-        font-size: 1.2rem;
-        font-weight: bold;
-        margin-bottom: 16px;
-    }
-
     .list {
         list-style: none;
         padding: 0;
@@ -78,20 +72,12 @@
         color: white;       /* 選択状態の文字色 */
         font-weight: bold;  /* 選択状態の強調 */
     }
-
-    .resizer {
-        width: 8px;
-        height: 100%;
-        position: absolute;
-        right: 0;
-        top: 0;
-        z-index: 10;
-    }
 </style>
 
 <div class="sidebar" style="width: {sidebarWidth}px; position: relative;" on:mousedown={startResizing}>
     <ul class="list">
         {#each papers as paper, index}
+            <!-- svelte-ignore a11y-click-events-have-key-events -->
             <li
                 class="list-item {selectedPaper === paper ? 'selected' : ''}"
                 on:click={() => selectPaper(paper)}
