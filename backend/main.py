@@ -1,14 +1,15 @@
 import hashlib
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from openai import OpenAI
 import PyPDF2
-import io
 import os
 from dotenv import load_dotenv
-from fastapi.middleware.cors import CORSMiddleware
 import shutil
 import json
+import urllib.parse
 
 # .envファイルを読み込む
 load_dotenv()
@@ -172,6 +173,25 @@ def get_paper(file_path, file_name):
     existing_result = old_to_new(existing_result)
     
     return existing_result
+
+
+@app.get("/pdf/{filename}")
+async def get_pdf(filename: str):
+    upload_dir = "uploaded_pdfs"
+    
+    # ファイル名の安全性を確保
+    safe_filename = os.path.basename(urllib.parse.unquote(filename))
+    file_path = os.path.join(upload_dir, safe_filename)
+    
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="ファイルが見つかりません。")
+    
+    return FileResponse(
+        path=file_path,
+        media_type='application/pdf',
+        filename=safe_filename
+    )
+    
     
 def old_to_new(existing_result):
     if "tags" not in existing_result:

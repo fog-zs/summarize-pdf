@@ -81,6 +81,7 @@
     }
   };
 
+
   const handleDrop = (event) => {
     event.preventDefault();
     const files = event.dataTransfer.files;
@@ -116,6 +117,25 @@
       notification = "";
     }, 3000); // 通知を3秒後に自動で消す
   };
+
+  const getPdf = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/pdf/${selectedPaper.filename}.pdf`, {
+      responseType: "blob", // バイナリデータを取得
+    });
+
+    // PDFデータをBlobオブジェクトとして扱う
+    const pdfBlob = new Blob([response.data], { type: "application/pdf" });
+
+    // Blob URLを生成
+    const pdfUrl = URL.createObjectURL(pdfBlob);
+
+    // 新しいタブでPDFを開く
+    window.open(pdfUrl, "_blank");
+  } catch (error) {
+    console.error("Error fetching PDF:", error);
+  }
+};
 
   // 選択された論文を保持
   let selectedPaper = null;
@@ -185,6 +205,11 @@
       >
         {notification}
       </div>
+    {/if}
+    
+    {#if selectedPaper}
+      <!-- PDFビューアの表示 -->
+      <button on:click={() => getPdf()}>PDF</button>
     {/if}
   </div>
 </main>
