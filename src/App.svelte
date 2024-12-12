@@ -183,11 +183,8 @@
       <div style="display: flex; gap: 2rem;">
         <div style="flex: 1;">
           <h2>抽出されたテキスト:</h2>
-          <textarea readonly rows="10" style="width: 100%;"
-            >{extractedText}</textarea
-          >
-          <button on:click={() => copyToClipboard(extractedText)}>コピー</button
-          >
+          <textarea readonly rows="16" style="width: 100%;">{extractedText}</textarea>
+          <button on:click={() => copyToClipboard(extractedText)}>コピー</button>
           <button
             on:click={summarizeText}
             style="margin-top: 1rem;"
@@ -196,8 +193,8 @@
         </div>
         <div style="flex: 1;">
           <h2>要約結果:</h2>
-          <textarea readonly rows="10" style="width: 100%;">{summary}</textarea>
-          <button on:click={() => copyToClipboard(summary)}>コピー</button>
+          <textarea readonly rows="16" style="width: 100%;">{summary}</textarea>
+          <button on:click={() => copyToClipboard(summary)} style="margin-top: 1rem;">コピー</button>
         </div>
       </div>
     {/if}
