@@ -10,7 +10,7 @@
   let notification = "";
   let isSummarizing = false;
 
-  const API_BASE_URL = "http://localhost:8000";
+  const API_BASE_URL = "http://localhost:9012";
 
   import Sidebar from "./components/Sidebar.svelte";
   let papers = [];
