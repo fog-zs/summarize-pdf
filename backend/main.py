@@ -93,10 +93,11 @@ async def summarize_text(request: SummarizeRequest):
     if len(text) == 0:
         return {"error": "要約するテキストがありません。"}
     
+    filehash = filename.replace(".pdf", "")
     # 既に同じファイルの要約結果が存在するか確認
     results_dir = "summary_results"
     os.makedirs(results_dir, exist_ok=True)
-    result_file_path = os.path.join(results_dir, f"{generate_string_hash(text)}_summary.json")
+    result_file_path = os.path.join(results_dir, f"{filehash}.json")
     if os.path.exists(result_file_path):
         with open(result_file_path, "r", encoding="utf-8") as f:
             existing_result = json.load(f)            
@@ -111,11 +112,13 @@ async def summarize_text(request: SummarizeRequest):
     
     prompt = get_prompt("tag")
     tags = llm(prompt, title)    
-    tasg = tags.replace(", ", ",")
+    tags = tags.replace(", ", ",")
+    
     
     # 結果を保存
     result = {
-        "filename": filename,
+        "id": generate_string_hash(text),
+        "filename": filehash,
         "title": title, 
         "text": text,
         "summary": summary,
@@ -151,7 +154,7 @@ async def get_papers():
     
     # アップロードされたPDFを読み込み
     papers = []
-    if not os.path.exists(results_dir): return {"papers": none}
+    if not os.path.exists(results_dir): return {"papers": None }
     for file_name in os.listdir(results_dir):
         result_file_path = os.path.join(results_dir, file_name)        
         paper = get_paper(result_file_path, file_name)
@@ -160,10 +163,7 @@ async def get_papers():
     return {"papers": papers }
 
 def get_paper(file_path, file_name):    
-    if not file_path.endswith(".json"): return
-    
-    file_hash = file_name.split("_")[0]        
-    
+    if not file_path.endswith(".json"): return    
     if not os.path.exists(file_path): return
     
     with open(file_path, "r", encoding="utf-8") as f:
@@ -171,17 +171,11 @@ def get_paper(file_path, file_name):
     
     existing_result = old_to_new(existing_result)
     
-    return {
-        "id": file_hash,
-        "title": existing_result["title"],  # タイトルをファイル名から取得（拡張子除く）
-        "text": existing_result["text"],
-        "summary": existing_result["text"],
-        "tags": existing_result["tag"]
-    }
+    return existing_result
     
 def old_to_new(existing_result):
-    if "tag" not in existing_result:
-        existing_result["tag"] = []
+    if "tags" not in existing_result:
+        existing_result["tags"] = []
     
     if "text" not in existing_result:
         existing_result["text"] = existing_result["extracted_text"]

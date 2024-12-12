@@ -6,6 +6,7 @@
   let tags = [];
   let summary = "";
   let extractedText = "";
+  let filename = "";
   let errorMessage = "";
   let notification = "";
   let isSummarizing = false;
@@ -49,6 +50,7 @@
         },
       );
       extractedText = response.data.extracted_text;
+      filename = response.data.filename;
       summary = ""; // 新しいPDFがアップロードされたら要約ボックスを空にする
     } catch (error) {
       errorMessage = "テキストの抽出に失敗しました。";
@@ -66,7 +68,7 @@
     try {
       const response = await axios.post(`${API_BASE_URL}/summarize-text/`, {
         text: extractedText,
-        filename: file.name,
+        filename: filename,
       });
       const paper = response.data.paper;
       papers.push(paper);
