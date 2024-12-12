@@ -161,7 +161,12 @@
   <Sidebar {papers} on:select={handleSelect} />
   <div class="content">
     {#if title}
-      <h2>{title}</h2>
+      <div style="display: flex; align-items: center;">
+        <h2 style="margin-right: 10px;">{title}</h2>
+        {#if selectedPaper}
+        <button on:click={() => getPdf()}>PDF</button>
+        {/if}
+      </div>
     {/if}
     {#if Array.isArray(tags) && tags.length > 0}
       <p>Tags: {tags.join(", ")}</p>
@@ -205,12 +210,7 @@
       >
         {notification}
       </div>
-    {/if}
-    
-    {#if selectedPaper}
-      <!-- PDFビューアの表示 -->
-      <button on:click={() => getPdf()}>PDF</button>
-    {/if}
+    {/if}        
   </div>
 </main>
 

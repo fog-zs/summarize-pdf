@@ -41,8 +41,7 @@
 
 <style>
     .sidebar {
-        height: 100vh;
-        background-color: #f4f4f4;
+        height: 100vh;        
         border-right: 1px solid #ccc;
         padding: 16px;
         overflow-y: auto;
@@ -58,13 +57,12 @@
     .list-item {
         margin: 8px 0;
         padding: 8px;
-        border-radius: 4px;
-        background: #eaeaea;
+        border-radius: 8px;        
         cursor: pointer;
     }
 
     .list-item:hover {
-        background: #ddd;
+        background: #575757;
     }
 
     .list-item.selected {
