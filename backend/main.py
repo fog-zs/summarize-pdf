@@ -174,7 +174,7 @@ def get_paper(file_path, file_name):
     return {
         "id": file_hash,
         "title": existing_result["title"],  # タイトルをファイル名から取得（拡張子除く）
-        "text": existing_result["extracted_text"],
+        "text": existing_result["text"],
         "summary": existing_result["text"],
         "tags": existing_result["tag"]
     }
